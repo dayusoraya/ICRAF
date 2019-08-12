@@ -1,5 +1,8 @@
 #Papua Barat
 
+#=== Testing changes AE
+
+
 library(XML)
 library(reshape2)
 library(plyr)
@@ -77,6 +80,7 @@ pyramidGH <- ggplot(age_pop, aes(x = Age, y = Population, fill = Gender)) +
   scale_y_continuous(labels = paste0(as.character(c(seq(2, 0, -1), seq(1, 2, 1))), "m")) + 
   coord_flip()
 pyramidGH
+
 
 
 
