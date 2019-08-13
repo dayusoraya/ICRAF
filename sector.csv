@@ -1,0 +1,35 @@
+Padi,Agriculture,Paddy
+Jagung,Agriculture,Corn
+Tanaman sayur dan buah2an,Agriculture,Vegetables and fruits
+Tanaman Bahan Makanan Lainnya,Agriculture,Other food crop
+Pala,Agriculture,Nutmeg
+Kelapa Sawit,Agriculture,Oil palm
+Kopi,Agriculture,Coffee
+Coklat,Agriculture,Chocolate
+Tanaman Perkebunan Lainnya,Agriculture,Other tree crop
+Peternakan dan Hasil-hasilnya,Agriculture,Livestock
+Kayu,Agriculture,Natural wood
+Hasil Hutan lainnya,Agriculture,Other forest product
+Perikanan laut dan hasil-hasilnya,Agriculture,Marine fishery
+Perikanan Darat,Agriculture,Inland fishery
+Pertambangan Batubara dan Mineral lainnya,Mining,Coal mining
+Pertambagan Migas,Mining,Gas and oil mining
+Penggalian,Mining,Extraction
+Industri Penggilingan Padi,Processing industry,Paddy grinding industry
+Industri Pengolahan Minyak Sawit,Processing industry,Oil palm industry
+Industri Penggilingan Kopi,Processing industry,Coffee grinding industry
+Industri Pengolahan Coklat,Processing industry,Chocolate industry
+"Industri Kayu Olahan, dan Barang dari Kayu",Processing industry,Processed wood industry
+Industri Migas,Processing industry,Gas and oil industry
+Industri lainnya,Processing industry,Other industry
+"Listrik, Gas dan Air Bersih","Electricity, gas and drinking water",Electricity and drinking water
+Konstruksi,Construction,Construction
+Perdagangan,Trade and accomodation,Trade
+Hotel,Trade and accomodation,Trade
+Restoran,Trade and accomodation,Trade
+Angkutan,Transportation and communication,Transportation
+Komunikasi,Transportation and communication,Communication
+Bank dan Lembaga Keuangan,Finance and insurance,Finance
+Pemerintahan Umum,Other services,Administration services
+Jasa-jasa lainnya,Other services,Other services
+Kegiatan yang belum jelas batasannya,Other services,Other services
