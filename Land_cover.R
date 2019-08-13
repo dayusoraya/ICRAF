@@ -16,6 +16,9 @@ imported_raster<-raster(lc_2018)
 area_of_papbar<-freq(imported_raster)
 area_of_papbar<- as.data.frame(area_of_papbar) #calculate area of land cover classess
 
+#looping input file
+
+
 #Read input files
 sector<- read.csv("sector.csv", header=FALSE, sep =",")
 land_dist<- read.csv("land_dist.csv", header=FALSE, sep =",")
