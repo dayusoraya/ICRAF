@@ -1,17 +1,20 @@
 #Papua Barat
 
-library(tiff)
+#library(tiff)
 library(raster)
-library(rgdal)
+#library(rgdal)
 
 #Set working directory
+df<- "C:/ICRAF/IO/Papua_Barat/Land_cover/input_file/ICRAF"
+setwd(df)
 
 #Writing project file
 
 #Read file from rif files
 lc_2018<-'lc2018_papbar_100m.tif' 
-imported_raster<-raster('lc2018_papbar_100m.tif')
-area_of_papbar<-as.data.frame(freq(imported_raster))    #extract pixel files into numeric
+imported_raster<-raster(lc_2018)
+area_of_papbar<-freq(imported_raster)
+area_of_papbar<- as.data.frame(area_of_papbar) #calculate area of land cover classess
 
 #Read input files
 sector<- read.csv("sector.csv", header=FALSE, sep =",")
