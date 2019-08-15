@@ -1,7 +1,8 @@
 #Papua Barat
-#Line 50 utk Looping calculationnya masih ada error pak. saya coba perbaiki
+#Failed to make a GDP plot (in Lines of 135-138)
 
 library(raster)
+library(ggplot2)
 
 #Set working directory
 df<- "C:/ICRAF/IO/Papua_Barat/Land_cover/input_file/ICRAF/ICRAF"
@@ -11,10 +12,11 @@ setwd(df)
 
 #Read file from tif files
 #calculate area of land cover classess
-list_of_raster_file <- list.files(df, pattern="\\.tif$")
+list_of_raster_file <- list.files(df, pattern="\\.tif$")  #type of data character, class=list, 1 column, 11 variables
 length_of_raster<-length(list_of_raster_file)
 
 initial_year<-2018
+#
 land_cov<- read.csv("land_cover.csv", header=TRUE, sep =",")
 for(i in 1:length_of_raster){
 
@@ -26,6 +28,7 @@ for(i in 1:length_of_raster){
   
 }
 
+View(land_cov)
 
 #Subset No Data from the land_cov table
 final_land.cov<- subset(land_cov[2:20,])
@@ -38,45 +41,98 @@ add_val<- read.csv("add_value.csv", header=FALSE, sep =",")
 fin_demand<- read.csv("fin_demand.csv", header=FALSE, sep =",")
 
 
-#Calculation
-tot_fin.dem<- rowSums(fin_demand)
-output<- tot_fin.dem+rowSums(int_demand)
-tot_add.val<-colSums(add_val)
+#CALCULATE INVERS LEONTIEF
+int_demand.m<-as.matrix(int_demand)
+add_val.m<-as.matrix(add_val)
+dim<-ncol(int_demand.m)
+int_demand.ctot<-colSums(int_demand.m)
+add_val.ctot<-colSums(add_val.m)
+fin_con<- 1/(int_demand.ctot+add_val.ctot)
+fin_con[is.infinite(fin_con)]<-0
+t.input.invers<-diag(fin_con)
+A<-int_demand.m %*% t.input.invers
+I<-as.matrix(diag(dim))
+I_A<-I-A
+Leontief<-solve(I_A)
 
+
+#Calculation for year 2018
+tot_fin.dem<- rowSums(fin_demand)
+output<-tot_fin.dem+rowSums(int_demand)
+tot_add.val<-colSums(add_val)
+diag_land.cov<- diag(unlist(final_land.cov[,3]))   
+land_req<-land_dist.m %*% diag_land.cov
+LR<- rowSums(land_req)
 prop_GDP<- tot_add.val/output
 prop_inc<- add_val[1,]/output
-prop_profit<- add_val[2]/output
+prop_profit<- add_val[2,]/output
+FD_prop<- tot_fin.dem/output
+LRC<- LR/output
+LPC<- output/LR
+GDP<- prop_GDP*output
+Income<- t(prop_inc)*output
+Profit<- t(prop_profit)*output
+Results<-cbind(output,tot_fin.dem,FD_prop,LR,LRC,LPC,GDP,Income,Profit)
+Results[,][is.nan(Results[,])] <- 0
+Results[,][is.infinite(Results[,])] <- 0
+colnames(Results)<- c("Output-2011","FD-2011","FD_Prop","LR","LRC","LPC","GDP2011","Income-2011","Profit-2011")
+Results.dat<-as.data.frame(Results)
 
-#Looping
-Results<-NULL
-for(i in 3:ncol(final_land.cov)) {
-  diag_land.cov<- diag(unlist(final_land.cov[,i]))   
-  land_req<-land_dist.m %*% diag_land.cov
-  LR<- rowSums(land_req)
+
+#Looping Simulation from year 2021-2051
+final_table<-NULL
+Results_2<-NULL
+initial_year2<-2018
+for(i in 4:ncol(final_land.cov)) {                      
+  #land_cover=final_land.cov[,4:length(final_land.cov)]
+  diag_land.cov2<- diag(unlist(final_land.cov[,i]))   
+  land_req2<-land_dist.m %*% diag_land.cov2
+  LR2<- rowSums(land_req2)
+  FD_sim<-(LR2*LPC)*FD_prop
   
-  tot_fin.dem<- rowSums(fin_demand)
-  output<- tot_fin.dem+rowSums(int_demand)
-  tot_add.val<-colSums(add_val)
+  FD_sim[is.nan(FD_sim)] <- 0
+  Output_sim<-Leontief %*% FD_sim
   
-  prop_GDP<- tot_add.val[i-2]/output[i-2]
-  prop_inc<- add_val[i-2]/output[i-2]
-  prop_profit<- add_val[i-2]/output[i-2]
-  FD_prop<- tot_fin.dem[i-2]/output[i-2]
-  LRC<- LR/output[i-2]
-  LPC<- output[i-2]/LR
-  GDP<- prop_GDP*output[i-2]
-  Income<- prop_inc*output[i-2]
-  Profit<- prop_profit*output[i-2]
+  GDP_sim<- Output_sim*prop_GDP
+  Income_sim<- t(prop_inc)*Output_sim
+  Profit_sim<- t(prop_profit)*Output_sim
   
-  Results[[i-2]]<-cbind(output[i-2],tot_fin.dem[i-2],FD_prop[i-2],LR,LRC,LPC,GDP,Income,Profit)
-  names(Results[[i-2]])<-c("Ouput","FD","FD_Prop","LR","LRC","LPC","GDP","Income","Profit")
-  Results[[i-2]]$FD_prop[is.nan(Results[[i-2]]$LRC)] <-0
-  Results[[i-2]]$LRC[is.infinite(Results[[i-2]]$FD_prop)] <-0
-  names(Results[[i-2]])<-paste(c("Ouput","FD","FD_Prop","LR","LRC","LPC","GDP","Income","Profit"))
+  Results_2[[i-3]]<-cbind(FD_sim,Output_sim,GDP_sim,Income_sim,Profit_sim)
+  
+  names(Results_2[[i-3]])<- c("FD_sim", "Output_Sim","GDP_sim","Income_sim","Profit_sim")
+  colnames(Results_2[[i-3]])<- paste(c("FD_sim", "Output_Sim","GDP_sim","Income_sim","Profit_sim"),2018+(i-3)*3)
+  
+  Results_2.dat<-as.data.frame(Results_2)
+  #unlist(Results_2,recursive = TRUE, use.names = TRUE)
+  
+  #final_table[[i-3]]<-cbind(Output_sim,GDP_sim,Income_sim,Profit_sim)
+  #colnames(final_table[[i-3]])<-paste(c("Output","GDP","Income","Profit"),2018+(i-3)*3)
+  
+  
+  #eval(parse(text=(paste0("Output", initial_year2 + (i-3)*3, "<- as.data.frame(Output_sim[",i ,"],)"))))
+  #eval(parse(text=(paste0("GDP", initial_year2 + (i-3)*3, "<- as.data.frame(GDP_sim[",i ,"],)"))))
+  #eval(parse(text=(paste0("Income", initial_year2 + (i-3)*3, "<- as.data.frame(Income_sim[",i ,"],)"))))
+  #eval(parse(text=(paste0("Profit", initial_year2 + (i-3)*3, "<- as.data.frame(Profit_sim[",i ,"],)"))))
+  
+  #eval(parse(text=(paste0("final_table<-cbind(Output", initial_year + (i-1)*3,",","GDP", initial_year + (i-1)*3,",","Income", initial_year + (i-1)*3,",","Profit", initial_year + (i-1)*3,",)"))))
+  
   
 }
 
-View(Results[[1]])
+#Combine results of year 2018 and all those simulation
+all_tables<- cbind(Results.dat,Results_2.dat)
+all_GDP<-cbind(Results.dat$GDP2011,Results_2.dat$GDP_sim.2021,Results_2.dat$GDP_sim.2024,Results_2.dat$GDP_sim.2027,Results_2.dat$GDP_sim.2030,
+               Results_2.dat$GDP_sim.2033,Results_2.dat$GDP_sim.2036,Results_2.dat$GDP_sim.2039,Results_2.dat$GDP_sim.2042,
+               Results_2.dat$GDP_sim.2045,Results_2.dat$GDP_sim.2048)
+all_GDP[,][is.nan(all_GDP[,])] <- 0
+GDP_avg<-colSums(all_GDP)
+GDP_avg.dat<-as.data.frame(GDP_avg)
+#rownames(GDP_avg.dat)<- paste(c(2018,2021,2024,2027,2030,2033,2036,2039,2042,2045,2048))
+#colnames(GDP_avg.dat)[1]<-"Year"
+#colnames(GDP_avg.dat)[2]<-"GDP"
 
-.  
+
 #Plot GDP
+GDP_graph<-ggplot(data=GDP_avg.dat, aes(x=year, y=GDP, fill=CATEGORY)) + 
+  geom_bar(colour="black", stat="identity")+ coord_flip() +  
+  guides(fill=FALSE) + xlab("Sectors") + ylab("Value") 

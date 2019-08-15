@@ -1,20 +1,20 @@
-No Data,37327
-Undisturbed Forest ,6532685
-Logged Over Forest High-density,1135713
-Logged Over Forest Low-density,464770
-Undisturbed Swamp Forest,580365
-Logged Over Swamp Forest,21427
-Undisturbed Mangrove,362064
-Logged Over Mangrove,28989
-Sagoo Forest,221436
-Mix Garden,41496
-Coconut agroforest,9013
-Cacao,7534
-Oil Palm,39538
-Rice field,1586
-Other Annual Crop,16584
-Shrub,22215
-Grass,14516
-Cleared land,114327
-Settlement,20075
-Water body,145919
+ID,Land_cov
+1,Undisturbed Forest 
+2,Logged Over Forest High-density
+3,Logged Over Forest Low-density
+4,Undisturbed Swamp Forest
+5,Logged Over Swamp Forest
+6,Undisturbed Mangrove
+7,Logged Over Mangrove
+8,Sagoo Forest
+9,Mix Garden
+10,Coconut agroforest
+11,Cacao
+12,Oil Palm
+13,Rice field
+14,Other Annual Crop
+15,Shrub
+16,Grass
+17,Cleared land
+18,Settlement
+19,Water body
