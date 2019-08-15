@@ -2,7 +2,9 @@
 #Failed to make a GDP plot (in Lines of 135-138)
 
 library(raster)
+library(tidyverse)
 library(ggplot2)
+library(plotly)
 
 #Set working directory
 df<- "C:/ICRAF/IO/Papua_Barat/Land_cover/input_file/ICRAF/ICRAF"
@@ -39,6 +41,8 @@ land_dist.m<-as.matrix(land_dist)
 int_demand<- read.csv("int_demand.csv", header=FALSE, sep=",")
 add_val<- read.csv("add_value.csv", header=FALSE, sep =",")
 fin_demand<- read.csv("fin_demand.csv", header=FALSE, sep =",")
+sector<-read.csv("sector.csv", header=FALSE, sep =",")
+sector.m<-as.matrix(sector)
 
 
 #CALCULATE INVERS LEONTIEF
@@ -72,10 +76,11 @@ LPC<- output/LR
 GDP<- prop_GDP*output
 Income<- t(prop_inc)*output
 Profit<- t(prop_profit)*output
+#Include the sectors name
 Results<-cbind(output,tot_fin.dem,FD_prop,LR,LRC,LPC,GDP,Income,Profit)
 Results[,][is.nan(Results[,])] <- 0
 Results[,][is.infinite(Results[,])] <- 0
-colnames(Results)<- c("Output-2011","FD-2011","FD_Prop","LR","LRC","LPC","GDP2011","Income-2011","Profit-2011")
+colnames(Results)<- c("Output-2018","FD-2018","FD_Prop","LR","LRC","LPC","GDP2018","Income-2018","Profit-2018")
 Results.dat<-as.data.frame(Results)
 
 
@@ -96,13 +101,19 @@ for(i in 4:ncol(final_land.cov)) {
   GDP_sim<- Output_sim*prop_GDP
   Income_sim<- t(prop_inc)*Output_sim
   Profit_sim<- t(prop_profit)*Output_sim
-  
+  #sector
   Results_2[[i-3]]<-cbind(FD_sim,Output_sim,GDP_sim,Income_sim,Profit_sim)
+  
+  Results_2[i-3][is.nan(Results_2[i-3])] <- 0
+  Results_2[i-3][is.infinite(Results_2[i-3])] <- 0
   
   names(Results_2[[i-3]])<- c("FD_sim", "Output_Sim","GDP_sim","Income_sim","Profit_sim")
   colnames(Results_2[[i-3]])<- paste(c("FD_sim", "Output_Sim","GDP_sim","Income_sim","Profit_sim"),2018+(i-3)*3)
   
   Results_2.dat<-as.data.frame(Results_2)
+  
+  #Make 5 different tables considering the same ....variables (outside looping) avoid hard-code (11->for the colnames)
+  
   #unlist(Results_2,recursive = TRUE, use.names = TRUE)
   
   #final_table[[i-3]]<-cbind(Output_sim,GDP_sim,Income_sim,Profit_sim)
@@ -120,19 +131,46 @@ for(i in 4:ncol(final_land.cov)) {
 }
 
 #Combine results of year 2018 and all those simulation
+
 all_tables<- cbind(Results.dat,Results_2.dat)
-all_GDP<-cbind(Results.dat$GDP2011,Results_2.dat$GDP_sim.2021,Results_2.dat$GDP_sim.2024,Results_2.dat$GDP_sim.2027,Results_2.dat$GDP_sim.2030,
+
+all_GDP<-cbind(Results.dat$GDP2018,Results_2.dat$GDP_sim.2021, Results_2.dat$GDP_sim.2024,Results_2.dat$GDP_sim.2027,Results_2.dat$GDP_sim.2030,
                Results_2.dat$GDP_sim.2033,Results_2.dat$GDP_sim.2036,Results_2.dat$GDP_sim.2039,Results_2.dat$GDP_sim.2042,
                Results_2.dat$GDP_sim.2045,Results_2.dat$GDP_sim.2048)
+
 all_GDP[,][is.nan(all_GDP[,])] <- 0
-GDP_avg<-colSums(all_GDP)
-GDP_avg.dat<-as.data.frame(GDP_avg)
+
+#all_GDP.2<-cbind(sector$V1,all_GDP)
+
+
+GDP_tot<-colSums(all_GDP)
+GDP_tot.dat<-as.data.frame(GDP_tot)
 #rownames(GDP_avg.dat)<- paste(c(2018,2021,2024,2027,2030,2033,2036,2039,2042,2045,2048))
 #colnames(GDP_avg.dat)[1]<-"Year"
 #colnames(GDP_avg.dat)[2]<-"GDP"
+#GDP_tot.dat$newcolumn<-c(2018,2021,2024,2027,2030,2033,2036,2039,2042,2045,2048)
+Years<- c(2018,2021,2024,2027,2030,2033,2036,2039,2042,2045,2048)
+GDP_tot.dat2<- cbind(Years,GDP_tot.dat)
 
 
-#Plot GDP
-GDP_graph<-ggplot(data=GDP_avg.dat, aes(x=year, y=GDP, fill=CATEGORY)) + 
-  geom_bar(colour="black", stat="identity")+ coord_flip() +  
-  guides(fill=FALSE) + xlab("Sectors") + ylab("Value") 
+#Plot GDP ->LINE CHART
+
+GDP_graph2<-ggplot(GDP_tot.dat2,aes(x=Years, y=GDP_tot))+geom_line()
+GDP_graph2
+
+#Percentage of economic growth based on GDP rate yoy
+#GDP_growth.tables<-NULL
+#for(i in 1(GDP_tot.dat2)[[i]]){
+  #GDP_growth.tables<- GDP(2018/initial_year+(i-3)*3)
+  #GDP_growth.tables.dat<-as.data.frame(GDP_growth.tables)
+#}                
+
+
+#Subset non land-based sector
+nlb_sector<-subset(all_GDP[26:35,])
+GDP_nlb<- colSums(nlb_sector)
+GDP_growth<-GDP_nlb*1.1251
+
+#Plot GDP growth of non land-based sector
+
+install.packages("plotly")
