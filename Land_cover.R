@@ -1,5 +1,4 @@
 #Papua Barat
-#Failed to make a GDP plot (in Lines of 135-138)
 
 library(raster)
 library(tidyverse)
