@@ -2,7 +2,6 @@
 
 library(raster)
 library(tidyverse)
-library(ggplot2)
 library(plotly)
 
 #Set working directory
@@ -76,10 +75,10 @@ GDP<- prop_GDP*output
 Income<- t(prop_inc)*output
 Profit<- t(prop_profit)*output
 #Include the sectors name
-Results<-cbind(output,tot_fin.dem,FD_prop,LR,LRC,LPC,GDP,Income,Profit)
+Results<-cbind(tot_fin.dem,FD_prop,LR,LRC,LPC,output,GDP,Income,Profit)
 Results[,][is.nan(Results[,])] <- 0
 Results[,][is.infinite(Results[,])] <- 0
-colnames(Results)<- c("Output-2018","FD-2018","FD_Prop","LR","LRC","LPC","GDP2018","Income-2018","Profit-2018")
+colnames(Results)<- c("FD2018","FD_Prop","LR","LRC","LPC","Output_sim.2018","GDP_sim.2018","Income_sim.2018","Profit_sim.2018")
 Results.dat<-as.data.frame(Results)
 
 
@@ -100,24 +99,17 @@ for(i in 4:ncol(final_land.cov)) {
   GDP_sim<- Output_sim*prop_GDP
   Income_sim<- t(prop_inc)*Output_sim
   Profit_sim<- t(prop_profit)*Output_sim
-  #sector
-  Results_2[[i-3]]<-cbind(FD_sim,Output_sim,GDP_sim,Income_sim,Profit_sim)
+  Results_2[[i-3]]<-cbind(Output_sim,GDP_sim,Income_sim,Profit_sim)
   
-  Results_2[i-3][is.nan(Results_2[i-3])] <- 0
-  Results_2[i-3][is.infinite(Results_2[i-3])] <- 0
+  names(Results_2[[i-3]])<- c("Output_Sim","GDP_sim","Income_sim","Profit_sim")
+  colnames(Results_2[[i-3]])<- paste(c("Output_sim","GDP_sim","Income_sim","Profit_sim"),2018+(i-3)*3)
   
-  names(Results_2[[i-3]])<- c("FD_sim", "Output_Sim","GDP_sim","Income_sim","Profit_sim")
-  colnames(Results_2[[i-3]])<- paste(c("FD_sim", "Output_Sim","GDP_sim","Income_sim","Profit_sim"),2018+(i-3)*3)
-  
-  Results_2.dat<-as.data.frame(Results_2)
+  #Results_2.dat<-as.data.frame(Results_2)
+  Results_2.m<-as.matrix(Results_2.dat)
+  Results_2.m[is.nan(Results_2.m)] <- 0
+  Results_2.m[is.infinite(Results_2.m)] <- 0
   
   #Make 5 different tables considering the same ....variables (outside looping) avoid hard-code (11->for the colnames)
-  
-  #unlist(Results_2,recursive = TRUE, use.names = TRUE)
-  
-  #final_table[[i-3]]<-cbind(Output_sim,GDP_sim,Income_sim,Profit_sim)
-  #colnames(final_table[[i-3]])<-paste(c("Output","GDP","Income","Profit"),2018+(i-3)*3)
-  
   
   #eval(parse(text=(paste0("Output", initial_year2 + (i-3)*3, "<- as.data.frame(Output_sim[",i ,"],)"))))
   #eval(parse(text=(paste0("GDP", initial_year2 + (i-3)*3, "<- as.data.frame(GDP_sim[",i ,"],)"))))
@@ -125,51 +117,53 @@ for(i in 4:ncol(final_land.cov)) {
   #eval(parse(text=(paste0("Profit", initial_year2 + (i-3)*3, "<- as.data.frame(Profit_sim[",i ,"],)"))))
   
   #eval(parse(text=(paste0("final_table<-cbind(Output", initial_year + (i-1)*3,",","GDP", initial_year + (i-1)*3,",","Income", initial_year + (i-1)*3,",","Profit", initial_year + (i-1)*3,",)"))))
-  
-  
-}
+
+  }
+
+#Combine Output, GDP, Income and Profit into 1 table
+Results_2.dat<-as.data.frame(Results_2.m)
+Final_table<-cbind(sector,Results.dat[,6:9],Results_2.dat)
 
 #Combine results of year 2018 and all those simulation
-
 all_tables<- cbind(Results.dat,Results_2.dat)
 
-all_GDP<-cbind(Results.dat$GDP2018,Results_2.dat$GDP_sim.2021, Results_2.dat$GDP_sim.2024,Results_2.dat$GDP_sim.2027,Results_2.dat$GDP_sim.2030,
-               Results_2.dat$GDP_sim.2033,Results_2.dat$GDP_sim.2036,Results_2.dat$GDP_sim.2039,Results_2.dat$GDP_sim.2042,
-               Results_2.dat$GDP_sim.2045,Results_2.dat$GDP_sim.2048)
-
-all_GDP[,][is.nan(all_GDP[,])] <- 0
-
-#all_GDP.2<-cbind(sector$V1,all_GDP)
-
-
-GDP_tot<-colSums(all_GDP)
-GDP_tot.dat<-as.data.frame(GDP_tot)
-#rownames(GDP_avg.dat)<- paste(c(2018,2021,2024,2027,2030,2033,2036,2039,2042,2045,2048))
-#colnames(GDP_avg.dat)[1]<-"Year"
-#colnames(GDP_avg.dat)[2]<-"GDP"
-#GDP_tot.dat$newcolumn<-c(2018,2021,2024,2027,2030,2033,2036,2039,2042,2045,2048)
-Years<- c(2018,2021,2024,2027,2030,2033,2036,2039,2042,2045,2048)
-GDP_tot.dat2<- cbind(Years,GDP_tot.dat)
-
+#Categorize the tables based on its GDP
+GDP_tables<-cbind(Final_table[,1:3],Final_table[,5],Final_table[,9],Final_table[,13],Final_table[,17],Final_table[,21],Final_table[,25],
+                  Final_table[,29],Final_table[,33],Final_table[,37],Final_table[,41],Final_table[,45])
+colnames(GDP_tables)<- c("Sector","Category","English","GDP_2018","GDP_2021","GDP_2024","GDP_2027","GDP_2030","GDP_2033","GDP_2036","GDP_2039","GDP_2042","GDP_2045","GDP_2048")
+#write.csv(GDP_tables,file="/ICRAF/IO/Papua_Barat/Land_cover/input_file/ICRAF/ICRAF/GDP_tables.csv", row.names = FALSE)
 
 #Plot GDP ->LINE CHART
+GDP_tot<-colSums(GDP_tables[,4:14])
+Year<- c(2018,2021,2024,2027,2030,2033,2036,2039,2042,2045,2048)
+GDP_plot<- cbind(Year,GDP_tot)
+GDP_plot<-as.data.frame(GDP_plot)
+GDP_graph<-ggplot(GDP_plot,aes(x=Year, y=GDP_tot))+geom_line(color="red")+geom_point()
 
-GDP_graph2<-ggplot(GDP_tot.dat2,aes(x=Years, y=GDP_tot))+geom_line()
-GDP_graph2
 
 #Percentage of economic growth based on GDP rate yoy
-#GDP_growth.tables<-NULL
-#for(i in 1(GDP_tot.dat2)[[i]]){
-  #GDP_growth.tables<- GDP(2018/initial_year+(i-3)*3)
-  #GDP_growth.tables.dat<-as.data.frame(GDP_growth.tables)
-#}                
+growth_2021= GDP_tot[2]/GDP_tot[1]
+growth_2024= GDP_tot[3]/GDP_tot[2]
+growth_2027= GDP_tot[4]/GDP_tot[3]
+growth_2030= GDP_tot[5]/GDP_tot[4]
+growth_2033= GDP_tot[6]/GDP_tot[5]
+growth_2036= GDP_tot[7]/GDP_tot[6]
+growth_2039= GDP_tot[8]/GDP_tot[7]
+growth_2042= GDP_tot[9]/GDP_tot[8]
+growth_2045= GDP_tot[10]/GDP_tot[9]
+growth_2048= GDP_tot[11]/GDP_tot[10]
+growth_rate<- rbind(growth_2021,growth_2024,growth_2027,growth_2030,growth_2033,growth_2036,growth_2039,growth_2042,growth_2045,growth_2048)
+year_of_year<- c(2021,2024,2027,2030,2033,2036,2039,2042,2045,2048)
+all_growth.rate<- cbind.data.frame(year_rate,growth_rate)
+colnames(all_growth.rate)<-c("Tahun","GDP_growth_rate")
+growth_rate.avg= mean(growth_rate)
 
+#Make a bar chart based on the GDP growth rate over year
+growth_rate.graph<-ggplot(data=all_growth.rate,aes(x=Tahun, y=GDP_growth_rate))+geom_bar(color="red", stat = "identity")
 
 #Subset non land-based sector
 nlb_sector<-subset(all_GDP[26:35,])
 GDP_nlb<- colSums(nlb_sector)
-GDP_growth<-GDP_nlb*1.1251
+GDP_growth<-GDP_nlb*1.079
 
 #Plot GDP growth of non land-based sector
-
-install.packages("plotly")
