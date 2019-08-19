@@ -41,6 +41,7 @@ add_val<- read.csv("add_value.csv", header=FALSE, sep =",")
 fin_demand<- read.csv("fin_demand.csv", header=FALSE, sep =",")
 sector<-read.csv("sector.csv", header=FALSE, sep =",")
 sector.m<-as.matrix(sector)
+non_lb<- read.csv("non_land_based.csv", header=TRUE, sep = ",")
 
 
 #CALCULATE INVERS LEONTIEF
@@ -142,28 +143,57 @@ GDP_graph<-ggplot(GDP_plot,aes(x=Year, y=GDP_tot))+geom_line(color="red")+geom_p
 
 
 #Percentage of economic growth based on GDP rate yoy
-growth_2021= GDP_tot[2]/GDP_tot[1]
-growth_2024= GDP_tot[3]/GDP_tot[2]
-growth_2027= GDP_tot[4]/GDP_tot[3]
-growth_2030= GDP_tot[5]/GDP_tot[4]
-growth_2033= GDP_tot[6]/GDP_tot[5]
-growth_2036= GDP_tot[7]/GDP_tot[6]
-growth_2039= GDP_tot[8]/GDP_tot[7]
-growth_2042= GDP_tot[9]/GDP_tot[8]
-growth_2045= GDP_tot[10]/GDP_tot[9]
-growth_2048= GDP_tot[11]/GDP_tot[10]
+growth_2021= (GDP_tot[2]-GDP_tot[1])/GDP_tot[1]
+growth_2024= (GDP_tot[3]-GDP_tot[2])/GDP_tot[2]
+growth_2027= (GDP_tot[4]-GDP_tot[3])/GDP_tot[3]
+growth_2030= (GDP_tot[5]-GDP_tot[4])/GDP_tot[4]
+growth_2033= (GDP_tot[6]-GDP_tot[5])/GDP_tot[5]
+growth_2036= (GDP_tot[7]-GDP_tot[6])/GDP_tot[6]
+growth_2039= (GDP_tot[8]-GDP_tot[7])/GDP_tot[7]
+growth_2042= (GDP_tot[9]-GDP_tot[8])/GDP_tot[8]
+growth_2045= (GDP_tot[10]-GDP_tot[9])/GDP_tot[9]
+growth_2048= (GDP_tot[11]-GDP_tot[10])/GDP_tot[10]
 growth_rate<- rbind(growth_2021,growth_2024,growth_2027,growth_2030,growth_2033,growth_2036,growth_2039,growth_2042,growth_2045,growth_2048)
 year_of_year<- c(2021,2024,2027,2030,2033,2036,2039,2042,2045,2048)
-all_growth.rate<- cbind.data.frame(year_rate,growth_rate)
+all_growth.rate<- cbind.data.frame(year_of_year,growth_rate)
 colnames(all_growth.rate)<-c("Tahun","GDP_growth_rate")
 growth_rate.avg= mean(growth_rate)
 
 #Make a bar chart based on the GDP growth rate over year
 growth_rate.graph<-ggplot(data=all_growth.rate,aes(x=Tahun, y=GDP_growth_rate))+geom_bar(color="red", stat = "identity")
 
-#Subset non land-based sector
+#Calculate economic growth using GDP data only for non land-based sector
+
+#Subset GDP non land-based sector
 nlb_sector<-subset(all_GDP[26:35,])
 GDP_nlb<- colSums(nlb_sector)
-GDP_growth<-GDP_nlb*1.079
 
-#Plot GDP growth of non land-based sector
+
+#Calculate average economic growth rate of non land-based only (%) based on GDP data for the past 5 years (2014-2018)
+nlb_tot<- colSums(non_lb[,2:6])
+nlb_2015=(nlb_tot[2]-nlb_tot[1])/nlb_tot[1]
+nlb_2016=(nlb_tot[3]-nlb_tot[2])/nlb_tot[2]
+nlb_2017=(nlb_tot[4]-nlb_tot[3])/nlb_tot[3]
+nlb_2018=(nlb_tot[5]-nlb_tot[4])/nlb_tot[4]
+avg_nlb.rate<- mean(nlb_2015,nlb_2016,nlb_2017,nlb_2018)
+
+
+#Projection of GDP growth for non land-based sector
+growth_nlb.2021=GDP_nlb[2]+(GDP_nlb[2]*avg_nlb.rate)
+growth_nlb.2024=GDP_nlb[3]+(GDP_nlb[3]*avg_nlb.rate)
+growth_nlb.2027=GDP_nlb[4]+(GDP_nlb[4]*avg_nlb.rate)
+growth_nlb.2030=GDP_nlb[5]+(GDP_nlb[5]*avg_nlb.rate)
+growth_nlb.2033=GDP_nlb[6]+(GDP_nlb[6]*avg_nlb.rate)
+growth_nlb.2036=GDP_nlb[7]+(GDP_nlb[7]*avg_nlb.rate)
+growth_nlb.2039=GDP_nlb[8]+(GDP_nlb[8]*avg_nlb.rate)
+growth_nlb.2042=GDP_nlb[9]+(GDP_nlb[9]*avg_nlb.rate)
+growth_nlb.2045=GDP_nlb[10]+(GDP_nlb[10]*avg_nlb.rate)
+growth_nlb.2048=GDP_nlb[11]+(GDP_nlb[11]*avg_nlb.rate)
+nlb_growth.rate<-rbind(growth_nlb.2021,growth_nlb.2024,growth_nlb.2027,growth_nlb.2030,growth_nlb.2033,growth_nlb.2036,
+                       growth_nlb.2039,growth_nlb.2042,growth_nlb.2045,growth_nlb.2048)
+all_nlb.rate<-cbind.data.frame(year_of_year,nlb_growth.rate)
+colnames(all_nlb.rate)<-c("Years","GDP_growth_rate_nlb")
+  
+
+#Plot GDP growth of non land-based sector (line chart) using linear rate
+linear_nlb.graph<-ggplot(data=all_nlb.rate,aes(x=Years, y=GDP_growth_rate_nlb))+geom_line(color="red", stat = "identity")+geom_point()
