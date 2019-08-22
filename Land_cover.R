@@ -77,6 +77,7 @@ Income<- t(prop_inc)*output
 Profit<- t(prop_profit)*output
 #Include the sectors name
 Results<-cbind(tot_fin.dem,FD_prop,LR,LRC,LPC,output,GDP,Income,Profit)
+
 Results[,][is.nan(Results[,])] <- 0
 Results[,][is.infinite(Results[,])] <- 0
 colnames(Results)<- c("FD2018","FD_Prop","LR","LRC","LPC","Output_sim.2018","GDP_sim.2018","Income_sim.2018","Profit_sim.2018")
@@ -105,7 +106,7 @@ for(i in 4:ncol(final_land.cov)) {
   names(Results_2[[i-3]])<- c("Output_Sim","GDP_sim","Income_sim","Profit_sim")
   colnames(Results_2[[i-3]])<- paste(c("Output_sim","GDP_sim","Income_sim","Profit_sim"),2018+(i-3)*3)
   
-  #Results_2.dat<-as.data.frame(Results_2)
+  Results_2.dat<-as.data.frame(Results_2)
   Results_2.m<-as.matrix(Results_2.dat)
   Results_2.m[is.nan(Results_2.m)] <- 0
   Results_2.m[is.infinite(Results_2.m)] <- 0
@@ -165,7 +166,7 @@ growth_rate.graph<-ggplot(data=all_growth.rate,aes(x=Tahun, y=GDP_growth_rate))+
 #Calculate economic growth using GDP data only for non land-based sector
 
 #Subset GDP non land-based sector
-nlb_sector<-subset(all_GDP[26:35,])
+nlb_sector<-subset(GDP_tables[26:35,4:14])
 GDP_nlb<- colSums(nlb_sector)
 
 
@@ -188,12 +189,14 @@ growth_nlb.2036=GDP_nlb[7]+(GDP_nlb[7]*avg_nlb.rate)
 growth_nlb.2039=GDP_nlb[8]+(GDP_nlb[8]*avg_nlb.rate)
 growth_nlb.2042=GDP_nlb[9]+(GDP_nlb[9]*avg_nlb.rate)
 growth_nlb.2045=GDP_nlb[10]+(GDP_nlb[10]*avg_nlb.rate)
+
 growth_nlb.2048=GDP_nlb[11]+(GDP_nlb[11]*avg_nlb.rate)
 nlb_growth.rate<-rbind(growth_nlb.2021,growth_nlb.2024,growth_nlb.2027,growth_nlb.2030,growth_nlb.2033,growth_nlb.2036,
                        growth_nlb.2039,growth_nlb.2042,growth_nlb.2045,growth_nlb.2048)
 all_nlb.rate<-cbind.data.frame(year_of_year,nlb_growth.rate)
 colnames(all_nlb.rate)<-c("Years","GDP_growth_rate_nlb")
   
+
 
 #Plot GDP growth of non land-based sector (line chart) using linear rate
 linear_nlb.graph<-ggplot(data=all_nlb.rate,aes(x=Years, y=GDP_growth_rate_nlb))+geom_line(color="red", stat = "identity")+geom_point()
