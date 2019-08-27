@@ -179,7 +179,7 @@ nlb_2018=(nlb_tot[5]-nlb_tot[4])/nlb_tot[4]
 avg_nlb.rate<- mean(nlb_2015,nlb_2016,nlb_2017,nlb_2018)
 
 
-#Projection of GDP growth for non land-based sector
+#Projection of GDP growth for non land-based sector using linear rate
 growth_nlb.2021=GDP_nlb[2]+(GDP_nlb[2]*avg_nlb.rate)
 growth_nlb.2024=GDP_nlb[3]+(GDP_nlb[3]*avg_nlb.rate)
 growth_nlb.2027=GDP_nlb[4]+(GDP_nlb[4]*avg_nlb.rate)
@@ -189,7 +189,6 @@ growth_nlb.2036=GDP_nlb[7]+(GDP_nlb[7]*avg_nlb.rate)
 growth_nlb.2039=GDP_nlb[8]+(GDP_nlb[8]*avg_nlb.rate)
 growth_nlb.2042=GDP_nlb[9]+(GDP_nlb[9]*avg_nlb.rate)
 growth_nlb.2045=GDP_nlb[10]+(GDP_nlb[10]*avg_nlb.rate)
-
 growth_nlb.2048=GDP_nlb[11]+(GDP_nlb[11]*avg_nlb.rate)
 nlb_growth.rate<-rbind(growth_nlb.2021,growth_nlb.2024,growth_nlb.2027,growth_nlb.2030,growth_nlb.2033,growth_nlb.2036,
                        growth_nlb.2039,growth_nlb.2042,growth_nlb.2045,growth_nlb.2048)
@@ -197,6 +196,25 @@ all_nlb.rate<-cbind.data.frame(year_of_year,nlb_growth.rate)
 colnames(all_nlb.rate)<-c("Years","GDP_growth_rate_nlb")
   
 
-
 #Plot GDP growth of non land-based sector (line chart) using linear rate
 linear_nlb.graph<-ggplot(data=all_nlb.rate,aes(x=Years, y=GDP_growth_rate_nlb))+geom_line(color="red", stat = "identity")+geom_point()
+
+
+#Plot GDP growth of non land-based sector (line chart) using gradual rate
+nlb_grad.2021=GDP_nlb[2]+(GDP_nlb[2]*nlb_2015)
+nlb_grad.2024=GDP_nlb[3]+(GDP_nlb[3]*nlb_2016)
+nlb_grad.2027=GDP_nlb[4]+(GDP_nlb[4]*nlb_2017)
+nlb_grad.2030=GDP_nlb[5]+(GDP_nlb[5]*nlb_2018)
+nlb_grad.2033=GDP_nlb[6]+(GDP_nlb[6]*nlb_2015)
+nlb_grad.2036=GDP_nlb[7]+(GDP_nlb[7]*nlb_2016)
+nlb_grad.2039=GDP_nlb[8]+(GDP_nlb[8]*nlb_2017)
+nlb_grad.2042=GDP_nlb[9]+(GDP_nlb[9]*nlb_2018)
+nlb_grad.2045=GDP_nlb[10]+(GDP_nlb[10]*nlb_2015)
+nlb_grad.2048=GDP_nlb[11]+(GDP_nlb[11]*nlb_2016)
+
+nlb.grad<-rbind(nlb_grad.2021,nlb_grad.2024,nlb_grad.2027,nlb_grad.2030,nlb_grad.2033,nlb_grad.2036,nlb_grad.2039,
+                    nlb_grad.2042,nlb_grad.2045,nlb_grad.2048)
+all_grad<-cbind.data.frame(year_of_year,nlb.grad)
+colnames(all_grad)<-c("Years","GDP_grad_nlb")
+
+grad_nlb.graph<-ggplot(data=all_grad,aes(x=Years, y=GDP_grad_nlb))+geom_line(color="red", stat = "identity")+geom_point()
