@@ -2,7 +2,6 @@
 
 library(raster)
 library(tidyverse)
-library(plotly)
 
 #Set working directory
 df<- "C:/ICRAF/IO/Papua_Barat/Land_cover/input_file/ICRAF/ICRAF"
@@ -42,6 +41,7 @@ fin_demand<- read.csv("fin_demand.csv", header=FALSE, sep =",")
 sector<-read.csv("sector.csv", header=FALSE, sep =",")
 sector.m<-as.matrix(sector)
 non_lb<- read.csv("non_land_based.csv", header=TRUE, sep = ",")
+rate_grad<-read.csv("gradual_rate.csv", header = FALSE, sep=",")
 
 
 #CALCULATE INVERS LEONTIEF
@@ -130,13 +130,13 @@ Final_table<-cbind(sector,Results.dat[,6:9],Results_2.dat)
 all_tables<- cbind(Results.dat,Results_2.dat)
 
 #Categorize the tables based on its GDP
-GDP_tables<-cbind(Final_table[,1:3],Final_table[,5],Final_table[,9],Final_table[,13],Final_table[,17],Final_table[,21],Final_table[,25],
+GDP_tables<-cbind.data.frame(Final_table[,1],Final_table[,5],Final_table[,9],Final_table[,13],Final_table[,17],Final_table[,21],Final_table[,25],
                   Final_table[,29],Final_table[,33],Final_table[,37],Final_table[,41],Final_table[,45])
-colnames(GDP_tables)<- c("Sector","Category","English","GDP_2018","GDP_2021","GDP_2024","GDP_2027","GDP_2030","GDP_2033","GDP_2036","GDP_2039","GDP_2042","GDP_2045","GDP_2048")
-#write.csv(GDP_tables,file="/ICRAF/IO/Papua_Barat/Land_cover/input_file/ICRAF/ICRAF/GDP_tables.csv", row.names = FALSE)
+colnames(GDP_tables)<- c("Sector","GDP_2018","GDP_2021","GDP_2024","GDP_2027","GDP_2030","GDP_2033","GDP_2036","GDP_2039","GDP_2042","GDP_2045","GDP_2048")
+write.csv(GDP_tables,file="/ICRAF/IO/Papua_Barat/Land_cover/input_file/ICRAF/ICRAF/GDP_tables.csv", row.names = FALSE)
 
 #Plot GDP ->LINE CHART
-GDP_tot<-colSums(GDP_tables[,4:14])
+GDP_tot<-colSums(GDP_tables[,2:12])
 Year<- c(2018,2021,2024,2027,2030,2033,2036,2039,2042,2045,2048)
 GDP_plot<- cbind(Year,GDP_tot)
 GDP_plot<-as.data.frame(GDP_plot)
@@ -166,17 +166,18 @@ growth_rate.graph<-ggplot(data=all_growth.rate,aes(x=Tahun, y=GDP_growth_rate))+
 #Calculate economic growth using GDP data only for non land-based sector
 
 #Subset GDP non land-based sector
-nlb_sector<-subset(GDP_tables[26:35,4:14])
+nlb_sector<-subset(GDP_tables[18:35,2:12])
 GDP_nlb<- colSums(nlb_sector)
 
 
 #Calculate average economic growth rate of non land-based only (%) based on GDP data for the past 5 years (2014-2018)
-nlb_tot<- colSums(non_lb[,2:6])
-nlb_2015=(nlb_tot[2]-nlb_tot[1])/nlb_tot[1]
-nlb_2016=(nlb_tot[3]-nlb_tot[2])/nlb_tot[2]
-nlb_2017=(nlb_tot[4]-nlb_tot[3])/nlb_tot[3]
-nlb_2018=(nlb_tot[5]-nlb_tot[4])/nlb_tot[4]
-avg_nlb.rate<- mean(nlb_2015,nlb_2016,nlb_2017,nlb_2018)
+nlb_tot<- colSums(non_lb[,2:7])
+nlb_2014=(nlb_tot[2]-nlb_tot[1])/nlb_tot[1]
+nlb_2015=(nlb_tot[3]-nlb_tot[2])/nlb_tot[2]
+nlb_2016=(nlb_tot[4]-nlb_tot[3])/nlb_tot[3]
+nlb_2017=(nlb_tot[5]-nlb_tot[4])/nlb_tot[4]
+nlb_2018=(nlb_tot[6]-nlb_tot[5])/nlb_tot[5]
+avg_nlb.rate<- mean(c(nlb_2015,nlb_2016,nlb_2017,nlb_2018))
 
 
 #Projection of GDP growth for non land-based sector using linear rate
@@ -194,27 +195,93 @@ nlb_growth.rate<-rbind(growth_nlb.2021,growth_nlb.2024,growth_nlb.2027,growth_nl
                        growth_nlb.2039,growth_nlb.2042,growth_nlb.2045,growth_nlb.2048)
 all_nlb.rate<-cbind.data.frame(year_of_year,nlb_growth.rate)
 colnames(all_nlb.rate)<-c("Years","GDP_growth_rate_nlb")
+
+#Combine projection GDP growth land-based sector with non land-based sector (linear rate) 
+#a. Subset GDP land based sector using LR calculations
+GDP_LR<-subset.data.frame(GDP_tables[1:17,])
+
+#b.Project the changes of GDP over years using 6% of linear rate
+GDP_Lin<-NULL
+for (i in 2:ncol(GDP_tables)) {
   
+  GDPval<-GDP_tables[,i]+(GDP_tables[,i]*0.06*(3*(i-1)))
+  GDP_Lin[[i-1]]=GDPval
+  GDP_Lin[[i-1]]<-cbind(GDPval)
+  colnames(GDP_Lin[[i-1]])<- paste(c("GDP_"),2018+(i-2)*3,sep="")
+  GDP.dat<-as.data.frame(GDP_Lin)
+  
+}
 
-#Plot GDP growth of non land-based sector (line chart) using linear rate
-linear_nlb.graph<-ggplot(data=all_nlb.rate,aes(x=Years, y=GDP_growth_rate_nlb))+geom_line(color="red", stat = "identity")+geom_point()
+#c.According to the calculation of linear rate change, subset only for non land-based sectors
+Lin_nlb<- subset(GDP.dat[18:35,])
+Lin_nlb<- cbind(sector[18:35,1],Lin_nlb)
+colnames(Lin_nlb)[1]<- "Sector"
+
+#d.Combine land-based and non land-based sectors
+Linear_all<-rbind(GDP_LR,Lin_nlb)
+Linear_all.1<-colSums(Linear_all[,2:12])
+Years<- c(2018,2021,2024,2027,2030,2033,2036,2039,2042,2045,2048)
+Linear_all.fin<-cbind.data.frame(Years,Linear_all.1)
+
+#e. Plot the GDP growth
+linear_nlb.graph<-ggplot(data=Linear_all.fin,aes(x=Years, y=Linear_all.1))+geom_line(color="red", stat = "identity")+geom_point()
 
 
-#Plot GDP growth of non land-based sector (line chart) using gradual rate
-nlb_grad.2021=GDP_nlb[2]+(GDP_nlb[2]*nlb_2015)
-nlb_grad.2024=GDP_nlb[3]+(GDP_nlb[3]*nlb_2016)
-nlb_grad.2027=GDP_nlb[4]+(GDP_nlb[4]*nlb_2017)
-nlb_grad.2030=GDP_nlb[5]+(GDP_nlb[5]*nlb_2018)
-nlb_grad.2033=GDP_nlb[6]+(GDP_nlb[6]*nlb_2015)
-nlb_grad.2036=GDP_nlb[7]+(GDP_nlb[7]*nlb_2016)
-nlb_grad.2039=GDP_nlb[8]+(GDP_nlb[8]*nlb_2017)
-nlb_grad.2042=GDP_nlb[9]+(GDP_nlb[9]*nlb_2018)
-nlb_grad.2045=GDP_nlb[10]+(GDP_nlb[10]*nlb_2015)
-nlb_grad.2048=GDP_nlb[11]+(GDP_nlb[11]*nlb_2016)
+#Calculate GDP growth using gradual rate
 
-nlb.grad<-rbind(nlb_grad.2021,nlb_grad.2024,nlb_grad.2027,nlb_grad.2030,nlb_grad.2033,nlb_grad.2036,nlb_grad.2039,
-                    nlb_grad.2042,nlb_grad.2045,nlb_grad.2048)
-all_grad<-cbind.data.frame(year_of_year,nlb.grad)
-colnames(all_grad)<-c("Years","GDP_grad_nlb")
+#a. Calculate the gradual rate from 2015-2018
+grad_2015=(nlb_2015-nlb_2014)/nlb_2014
+grad_2016=(nlb_2016-nlb_2015)/nlb_2015
+grad_2017=(nlb_2017-nlb_2016)/nlb_2016
+grad_2018=(nlb_2018-nlb_2017)/nlb_2017
+grad_rate=mean(c(grad_2015,grad_2016,grad_2017,grad_2018))
 
-grad_nlb.graph<-ggplot(data=all_grad,aes(x=Years, y=GDP_grad_nlb))+geom_line(color="red", stat = "identity")+geom_point()
+#b.Calculate the changes of GDP rate using gradual rate (1,5%)
+#GDP_grad<-NULL
+#GDP_grad.2<-NULL
+#initial_rate<-nlb_2018
+
+#for (i in 1:29) {
+#Grad_val<-initial_rate+(initial_rate*grad_rate)
+#GDP_grad[[i]]<-Grad_val[i]+(Grad_val[i]*grad_rate)
+  
+ # Grad_val[i]=GDP_grad
+
+  #GDP_grad.2[[i]]=GDP_grad[[i]]+(GDP_grad[[i]]*grad_rate)
+  #GDP_grad[[i]]=GDP_grad.2[[i]]
+  #Grad_dat<-as.data.frame(GDP_grad.2)
+  
+#}
+
+#c. Projects the GDP using different gradual rates each year
+Grad_res.2021=nlb_sector[,2]+((nlb_sector[,2])*(rate_grad[2,2]))
+Grad_res.2024=nlb_sector[,3]+((nlb_sector[,3])*(rate_grad[3,2]))
+Grad_res.2027=nlb_sector[,4]+((nlb_sector[,4])*(rate_grad[4,2]))
+Grad_res.2030=nlb_sector[,5]+((nlb_sector[,5])*(rate_grad[5,2]))
+Grad_res.2033=nlb_sector[,6]+((nlb_sector[,6])*(rate_grad[6,2]))
+Grad_res.2036=nlb_sector[,7]+((nlb_sector[,7])*(rate_grad[7,2]))
+Grad_res.2039=nlb_sector[,8]+((nlb_sector[,8])*(rate_grad[8,2]))
+Grad_res.2042=nlb_sector[,9]+((nlb_sector[,9])*(rate_grad[9,2]))
+Grad_res.2045=nlb_sector[,10]+((nlb_sector[,10])*(rate_grad[10,2]))
+Grad_res.2048=nlb_sector[,11]+((nlb_sector[,11])*(rate_grad[11,2]))
+
+Grad_res<-cbind.data.frame(sector[18:35,1],nlb_sector[,1],Grad_res.2021,Grad_res.2024,Grad_res.2027,Grad_res.2030,
+                           Grad_res.2033,Grad_res.2036,Grad_res.2039,Grad_res.2042,Grad_res.2045,Grad_res.2048)
+colnames(Grad_res)<- c("Sector","GDP_2018","GDP_2021","GDP_2024","GDP_2027","GDP_2030","GDP_2033","GDP_2036","GDP_2039",
+                       "GDP_2042","GDP_2045","GDP_2048")
+Grad_all<-rbind(GDP_LR,Grad_res)
+
+#d. Plot the gradual changes of GDP
+Gradual_all.1<-colSums(Grad_all[,2:12])
+Grad_all.fin<-cbind.data.frame(Years,Gradual_all.1)
+grad_nlb.graph<-ggplot(data=Grad_all.fin,aes(x=Years, y=Gradual_all.1))+geom_line(color="red", stat = "identity")+geom_point()
+
+
+#Plot annual, linear and gradual graph into one
+GDP_all<-cbind.data.frame(GDP_plot,Linear_all.fin[,2],Grad_all.fin[,2])
+colnames(GDP_all)<-c("Year","GDP_baseline","GDP_linear","GDP_gradual")
+
+all_GDP.graph<- ggplot(GDP_all, aes(x=Year)) + 
+  geom_line(aes(y = GDP_baseline), color = "darkred") + 
+  geom_line(aes(y = GDP_linear), color="blue") +
+  geom_line(aes(y=GDP_gradual), color="green", linetype="twodash") 
