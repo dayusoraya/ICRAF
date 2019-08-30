@@ -84,7 +84,7 @@ colnames(Results)<- c("FD2018","FD_Prop","LR","LRC","LPC","Output_sim.2018","GDP
 Results.dat<-as.data.frame(Results)
 
 
-#Looping Simulation from year 2021-2051
+#Looping Simulation from year 2021-2048
 final_table<-NULL
 Results_2<-NULL
 initial_year2<-2018
@@ -95,7 +95,7 @@ for(i in 4:ncol(final_land.cov)) {
   LR2<- rowSums(land_req2)
   FD_sim<-(LR2*LPC)*FD_prop
   
-  FD_sim[is.nan(FD_sim)] <- 0
+  FD_sim[is.nan(FD_sim)] <- 0      #changes
   Output_sim<-Leontief %*% FD_sim
   
   GDP_sim<- Output_sim*prop_GDP
@@ -133,14 +133,15 @@ all_tables<- cbind(Results.dat,Results_2.dat)
 GDP_tables<-cbind.data.frame(Final_table[,1],Final_table[,5],Final_table[,9],Final_table[,13],Final_table[,17],Final_table[,21],Final_table[,25],
                   Final_table[,29],Final_table[,33],Final_table[,37],Final_table[,41],Final_table[,45])
 colnames(GDP_tables)<- c("Sector","GDP_2018","GDP_2021","GDP_2024","GDP_2027","GDP_2030","GDP_2033","GDP_2036","GDP_2039","GDP_2042","GDP_2045","GDP_2048")
-write.csv(GDP_tables,file="/ICRAF/IO/Papua_Barat/Land_cover/input_file/ICRAF/ICRAF/GDP_tables.csv", row.names = FALSE)
+#write.csv(GDP_tables,file="/ICRAF/IO/Papua_Barat/Land_cover/input_file/ICRAF/ICRAF/GDP_tables.csv", row.names = FALSE)
 
 #Plot GDP ->LINE CHART
 GDP_tot<-colSums(GDP_tables[,2:12])
 Year<- c(2018,2021,2024,2027,2030,2033,2036,2039,2042,2045,2048)
 GDP_plot<- cbind(Year,GDP_tot)
 GDP_plot<-as.data.frame(GDP_plot)
-GDP_graph<-ggplot(GDP_plot,aes(x=Year, y=GDP_tot))+geom_line(color="red")+geom_point()
+GDP_graph<-ggplot(GDP_plot,aes(x=Year, y=GDP_tot))+geom_line(color="red")+geom_point()+xlab("Year")+
+  ylab("Rupiah")+labs(title="Proyeksi GDP Papua Barat")
 
 
 #Percentage of economic growth based on GDP rate yoy
@@ -161,7 +162,8 @@ colnames(all_growth.rate)<-c("Tahun","GDP_growth_rate")
 growth_rate.avg= mean(growth_rate)
 
 #Make a bar chart based on the GDP growth rate over year
-growth_rate.graph<-ggplot(data=all_growth.rate,aes(x=Tahun, y=GDP_growth_rate))+geom_bar(color="red", stat = "identity")
+growth_rate.graph<-ggplot(data=all_growth.rate,aes(x=Tahun, y=GDP_growth_rate))+geom_bar(color="red", stat = "identity")+
+  xlab("Year")+ylab("Rupiah")+labs(title="Pertumbuhan ekonomi Papua Barat (GDP)")
 
 #Calculate economic growth using GDP data only for non land-based sector
 
@@ -224,7 +226,8 @@ Years<- c(2018,2021,2024,2027,2030,2033,2036,2039,2042,2045,2048)
 Linear_all.fin<-cbind.data.frame(Years,Linear_all.1)
 
 #e. Plot the GDP growth
-linear_nlb.graph<-ggplot(data=Linear_all.fin,aes(x=Years, y=Linear_all.1))+geom_line(color="red", stat = "identity")+geom_point()
+linear_nlb.graph<-ggplot(data=Linear_all.fin,aes(x=Years, y=Linear_all.1))+geom_line(color="red", stat = "identity")+geom_point()+
+  xlab("Year")+ylab("Rupiah")+labs(title="GDP Papua Barat dengan Linear Rate")
 
 
 #Calculate GDP growth using gradual rate
@@ -237,27 +240,21 @@ grad_2018=(nlb_2018-nlb_2017)/nlb_2017
 grad_rate=mean(c(grad_2015,grad_2016,grad_2017,grad_2018))
 
 #b.Calculate the changes of GDP rate using gradual rate (1,5%)
-#GDP_grad<-NULL
-#GDP_grad.2<-NULL
-#initial_rate<-nlb_2018
+initial_rate<-nlb_2018
+rate_next.year<-initial_rate+(initial_rate*grad_rate)
+GDP_grad<-rate_next.year
+for (i in 1:29) {
+  rate_next.year<-rate_next.year+(rate_next.year*grad_rate)
+  GDP_grad<-rbind(GDP_grad,rate_next.year)
+  #rownames(GDP_grad[[i]])<- paste(c("GDP_"),2018+(i),sep="")
 
-#for (i in 1:29) {
-#Grad_val<-initial_rate+(initial_rate*grad_rate)
-#GDP_grad[[i]]<-Grad_val[i]+(Grad_val[i]*grad_rate)
-  
- # Grad_val[i]=GDP_grad
-
-  #GDP_grad.2[[i]]=GDP_grad[[i]]+(GDP_grad[[i]]*grad_rate)
-  #GDP_grad[[i]]=GDP_grad.2[[i]]
-  #Grad_dat<-as.data.frame(GDP_grad.2)
-  
-#}
+}
 
 #c. Projects the GDP using different gradual rates each year
 Grad_res.2021=nlb_sector[,2]+((nlb_sector[,2])*(rate_grad[2,2]))
 Grad_res.2024=nlb_sector[,3]+((nlb_sector[,3])*(rate_grad[3,2]))
 Grad_res.2027=nlb_sector[,4]+((nlb_sector[,4])*(rate_grad[4,2]))
-Grad_res.2030=nlb_sector[,5]+((nlb_sector[,5])*(rate_grad[5,2]))
+Grad_res.2030=nlb_sector[,5]+((nlb_sector[,5])*(rate_grad[5,2]))s
 Grad_res.2033=nlb_sector[,6]+((nlb_sector[,6])*(rate_grad[6,2]))
 Grad_res.2036=nlb_sector[,7]+((nlb_sector[,7])*(rate_grad[7,2]))
 Grad_res.2039=nlb_sector[,8]+((nlb_sector[,8])*(rate_grad[8,2]))
@@ -274,14 +271,27 @@ Grad_all<-rbind(GDP_LR,Grad_res)
 #d. Plot the gradual changes of GDP
 Gradual_all.1<-colSums(Grad_all[,2:12])
 Grad_all.fin<-cbind.data.frame(Years,Gradual_all.1)
-grad_nlb.graph<-ggplot(data=Grad_all.fin,aes(x=Years, y=Gradual_all.1))+geom_line(color="red", stat = "identity")+geom_point()
+grad_nlb.graph<-ggplot(data=Grad_all.fin,aes(x=Years, y=Gradual_all.1))+geom_line(color="red", stat = "identity")+geom_point()+
+  xlab("Year")+ylab("Rupiah")+labs(title="GDP Papua Barat dengan Gradual Rate")
 
 
 #Plot annual, linear and gradual graph into one
 GDP_all<-cbind.data.frame(GDP_plot,Linear_all.fin[,2],Grad_all.fin[,2])
 colnames(GDP_all)<-c("Year","GDP_baseline","GDP_linear","GDP_gradual")
 
-all_GDP.graph<- ggplot(GDP_all, aes(x=Year)) + 
-  geom_line(aes(y = GDP_baseline), color = "darkred") + 
+#a
+all_GDP.graph<- ggplot(GDP_all, aes(x=Year)) + xlab("Year") + ylab("GDP dalam Rupiah")+ labs (title ="GDP Papua Barat")+
+  geom_line(aes(y = GDP_baseline), color = "red") + 
   geom_line(aes(y = GDP_linear), color="blue") +
-  geom_line(aes(y=GDP_gradual), color="green", linetype="twodash") 
+  geom_line(aes(y=GDP_gradual), color="green", linetype="twodash")
+
+#b
+GDP_papbar<-ggplot(data = GDP_all, aes(x = Year)) +
+  geom_line(aes(y = GDP_baseline, colour = "GDP_baseline")) +
+  geom_line(aes(y = GDP_linear, colour = "GDP_linear")) +
+  geom_line(aes(y = GDP_gradual, colour = "GDP_gradual")) +
+  scale_colour_manual("", values = c("GDP_baseline"="green", "GDP_linear"="red", "GDP_gradual"="blue")) +
+  xlab("Year") +scale_y_continuous("GDP dalam Rupiah", limits = c(0,500000000)) + labs(title="GDP Papua Barat")
+
+
+#Calculate economic growth based on each sectors growth
