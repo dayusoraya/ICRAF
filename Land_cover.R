@@ -1,10 +1,11 @@
 #Papua Barat
 
 library(raster)
-library(tidyverse)
+library(rgdal)
+library(ggplot2)
 
 #Set working directory
-df<- "C:/ICRAF/IO/Papua_Barat/Land_cover/input_file/ICRAF/ICRAF"
+df<- "D:/IO/Papua_Barat/Land_cover/input_file/ICRAF/ICRAF"
 setwd(df)
 
 #Writing project file
@@ -73,6 +74,7 @@ FD_prop<- tot_fin.dem/output
 LRC<- LR/output
 LPC<- output/LR
 GDP<- prop_GDP*output
+#transpose
 Income<- t(prop_inc)*output
 Profit<- t(prop_profit)*output
 #Include the sectors name
@@ -163,7 +165,7 @@ growth_rate.avg= mean(growth_rate)
 
 #Make a bar chart based on the GDP growth rate over year
 growth_rate.graph<-ggplot(data=all_growth.rate,aes(x=Tahun, y=GDP_growth_rate))+geom_bar(color="red", stat = "identity")+
-  xlab("Year")+ylab("Rupiah")+labs(title="Pertumbuhan ekonomi Papua Barat (GDP)")
+  xlab("Year")+ylab("(%)")+labs(title="Pertumbuhan ekonomi Papua Barat (GDP)")
 
 #Calculate economic growth using GDP data only for non land-based sector
 
@@ -225,7 +227,7 @@ Linear_all.1<-colSums(Linear_all[,2:12])
 Years<- c(2018,2021,2024,2027,2030,2033,2036,2039,2042,2045,2048)
 Linear_all.fin<-cbind.data.frame(Years,Linear_all.1)
 
-#e. Plot the GDP growth
+#e. Plot the GDP growth using linear rate
 linear_nlb.graph<-ggplot(data=Linear_all.fin,aes(x=Years, y=Linear_all.1))+geom_line(color="red", stat = "identity")+geom_point()+
   xlab("Year")+ylab("Rupiah")+labs(title="GDP Papua Barat dengan Linear Rate")
 
@@ -254,7 +256,7 @@ for (i in 1:29) {
 Grad_res.2021=nlb_sector[,2]+((nlb_sector[,2])*(rate_grad[2,2]))
 Grad_res.2024=nlb_sector[,3]+((nlb_sector[,3])*(rate_grad[3,2]))
 Grad_res.2027=nlb_sector[,4]+((nlb_sector[,4])*(rate_grad[4,2]))
-Grad_res.2030=nlb_sector[,5]+((nlb_sector[,5])*(rate_grad[5,2]))s
+Grad_res.2030=nlb_sector[,5]+((nlb_sector[,5])*(rate_grad[5,2]))
 Grad_res.2033=nlb_sector[,6]+((nlb_sector[,6])*(rate_grad[6,2]))
 Grad_res.2036=nlb_sector[,7]+((nlb_sector[,7])*(rate_grad[7,2]))
 Grad_res.2039=nlb_sector[,8]+((nlb_sector[,8])*(rate_grad[8,2]))
@@ -278,7 +280,7 @@ grad_nlb.graph<-ggplot(data=Grad_all.fin,aes(x=Years, y=Gradual_all.1))+geom_lin
 #Plot annual, linear and gradual graph into one
 GDP_all<-cbind.data.frame(GDP_plot,Linear_all.fin[,2],Grad_all.fin[,2])
 colnames(GDP_all)<-c("Year","GDP_baseline","GDP_linear","GDP_gradual")
-
+#a and b below show the same results, for my own purpose I wrote these scripts
 #a
 all_GDP.graph<- ggplot(GDP_all, aes(x=Year)) + xlab("Year") + ylab("GDP dalam Rupiah")+ labs (title ="GDP Papua Barat")+
   geom_line(aes(y = GDP_baseline), color = "red") + 
@@ -295,3 +297,51 @@ GDP_papbar<-ggplot(data = GDP_all, aes(x = Year)) +
 
 
 #Calculate economic growth based on each sectors growth
+#1. Gradual
+Grad_avg<- rowmeans(Grad_all[ ,2:12])
+Grad_sector<-cbind.data.frame(sector[,1],Grad_avg)
+colnames(Grad_sector)[1]<- "Sector"
+order_grad <- as.data.frame(Grad_sector[order(-Grad_sector$Grad_avg),])
+order_grad <-head(Grad_sector,n=10)
+Grad_sec.graph<-ggplot(data=order_grad, aes(x=Sector, y=Grad_avg, fill=Grad_avg)) + 
+  geom_bar(colour="black", stat="identity")+ coord_flip() +  
+  guides(fill=FALSE) + xlab("Sectors") + ylab("GDP in Rupiah") + labs(title="10 Sektor dengan GDP tertinggi (Gradual Rate)")
+
+#2. Linear
+Lin_avg<-rowMeans(Linear_all[,2:12])
+Lin_sector<-cbind.data.frame(sector[,1],Lin_avg)
+colnames(Lin_sector)[1]<- "Sector"
+order_lin <- as.data.frame(Lin_sector[order(-Lin_sector$Lin_avg),])
+order_lin <-head(Lin_sector,n=10)
+Lin_sec.graph<-ggplot(data=order_lin, aes(x=Sector, y=Lin_avg, fill=Lin_avg)) + 
+  geom_bar(colour="black", stat="identity")+ coord_flip() +  
+  guides(fill=FALSE) + xlab("Sectors") + ylab("GDP in Rupiah") + labs(title="10 Sektor dengan GDP tertinggi (Linear Rate)")
+
+#3.a Calculate economic growth only for land-based sector
+GDP_sector<-NULL
+for (i in 3:ncol(GDP_LR)) {
+  growth_per.sector<-((GDP_LR[,i]-GDP_LR[,i-1])/GDP_LR[,i-1])*10
+  GDP_sector[[i-2]]=growth_per.sector
+  GDP_sector[[i-2]]<-cbind(growth_per.sector)
+  colnames(GDP_sector[[i-2]])<- paste(c("GDP_"),2021+(i-3)*3,sep="")
+  GDP_sec.dat<-as.data.frame(GDP_sector)
+  
+}
+
+#Transpose
+GDP_sec.t<-t(GDP_sec.dat)
+GDP_sec.t2<-cbind.data.frame(year_of_year,GDP_sec.t)
+#Find the top 10 highest growth of GDP (Land-based only)
+GDP_sec.col<-colMeans(GDP_sec.t2[,2:18])
+order_LB <- as.data.frame(GDP_sec.col[order(-GDP_sec.col)])
+#The 10 highest GDP growth for land based sectors are (Sector 2,5,10,1,6,17,3,8,7,4)
+
+#3.b. Plotting into the graph (Several sectors have similar values, so when the graph is presented, they're overlapping each other)
+#So only choosing 4 sectors (Jagung, Coklat, Pertambangan batubara, dan pertambangan migas)
+
+growth_LB<- ggplot(GDP_sec.t2, aes(x=year_of_year)) + xlab("Tahun") + ylab("Pertumbuhan GDP (%)")+
+  labs (title ="Pertumbuhan GDP Sektor Land-Based di Papua Barat")+
+  geom_line(aes(y =GDP_sec.t2$`2`,colour="Jagung"))+geom_point(aes(y =GDP_sec.t2$`2`,colour="Jagung"))+
+  geom_line(aes(y =GDP_sec.t2$`7`,colour="Kopi"))+geom_point(aes(y =GDP_sec.t2$`7`,colour="Kopi"))+
+  geom_line(aes(y =GDP_sec.t2$`17`,colour="Penggalian"))+geom_point(aes(y =GDP_sec.t2$`17`,colour="Penggalian"))+
+  scale_colour_manual("", values = c("Jagung"="violetred", "Kopi"="lightblue", "Penggalian"="green"))
