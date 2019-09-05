@@ -37,8 +37,11 @@ View(land_cov)
 #Subset No Data from the land_cov table
 # AE: first you need to define the ID value of NODATA please consider the following code
 # AE: also consider to use'dplyr' package to help on subsetting dataframe
-# nodatavalue <- 0
-# final_land.cov <- land_cov  %>% filter(ID != nodatavalue)
+# AE: take a look at https://www.datanovia.com/en/lessons/subset-data-frame-rows-in-r/
+
+nodatavalue <- 0
+final_land.cov <- land_cov  %>% filter(ID != nodatavalue)
+
 final_land.cov<- subset(land_cov[2:20,])
 
 #Load another input files
